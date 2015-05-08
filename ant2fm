@@ -153,6 +153,21 @@ sub expandArg($$$) {
     return $x;
 }
 
+sub printArg($$$$) {
+    my ($a,$args,$arg,$val) = @_;
+    my $expanded = expandArg($a, $args, $val);
+    print '<node TEXT="',xe($arg.' = '.$val.($val eq $expanded ? '' : ' => '.$expanded)),'">';
+    print '<icon BUILTIN="',$typeIcons{arg},'"/>';
+    print '</node>';
+}
+
+sub printChild($) {
+    my ($child) = @_;
+    print '<node TEXT="',xe(xml10_write_element($child)),'">';
+    print '<icon BUILTIN="',$typeIcons{child},'"/>';
+    print '</node>';
+}
+
 sub runSteps($$$) {
     my ($a, $steps, $args) = @_;
 
@@ -240,6 +255,23 @@ sub runSteps($$$) {
 		print '</node>';
 	    }
 	    print '</node>';
+	} elsif ($name eq 'for') {
+	    print '<node TEXT="for ',xe($step->attribute('param')),'">';
+	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+	    foreach my $arg (keys %{$step->attributes}) {
+		next if($arg eq 'param');
+		my $val = $step->attribute($arg);
+		printArg($a,$args,$arg,$val);
+	    }
+	    foreach my $child (@{children($step)}) {
+		my $n = $child->type_name;
+		if ($n eq 'sequential') {
+		    runSteps($a,children($child),$args);
+		} else {
+		    printChild($child);
+		}
+	    }
+	    print '</node>';
 	} elsif ($name eq 'echo') {
 	    my $text = $step->attribute("message");
 	    my $children = $step->content_twine;
@@ -254,15 +286,10 @@ sub runSteps($$$) {
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
 		my $val = $step->attribute($arg);
-		my $expanded = expandArg($a, $args, $val);
-		print '<node TEXT="',xe($arg.' = '.$val.($val eq $expanded ? '' : ' => '.$expanded)),'">';
-		print '<icon BUILTIN="',$typeIcons{arg},'"/>';
-		print '</node>';
+		printArg($a,$args,$arg,$val);
 	    }
 	    foreach my $child (@{children($step)}) {
-		print '<node TEXT="',xe(xml10_write_element($child)),'">';
-		print '<icon BUILTIN="',$typeIcons{child},'"/>';
-		print '</node>';
+		printChild($child);
 	    }
 	    my $macro = $a->{macros}->{$name};
 	    if (defined($macro)) {
