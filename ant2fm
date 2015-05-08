@@ -59,7 +59,7 @@ sub parseMacro($$) {
     foreach my $elem (@{children($elem)}) {
 	my $name  = $elem->type_name;
 	if ($name eq 'attribute') {
-	    push @attrs, $elem->attribute("name");
+	    push @attrs, { name => $elem->attribute("name"), default => $elem->attribute("default") };
 	} elsif ($name eq 'sequential') {
 	    die if(defined($sequential));
 	    $sequential = children($elem);
@@ -153,17 +153,19 @@ sub expandArg($$$) {
     return $x;
 }
 
-sub printArg($$$$) {
-    my ($a,$args,$arg,$val) = @_;
+sub printArg($$$$$) {
+    my ($a,$args,$prefix,$arg,$val) = @_;
     my $expanded = expandArg($a, $args, $val);
-    print '<node TEXT="',xe($arg.' = '.$val.($val eq $expanded ? '' : ' => '.$expanded)),'">';
+    print '<node TEXT="',xe($prefix.$arg.' = '.$val.($val eq $expanded ? '' : ' => '.$expanded)),'">';
     print '<icon BUILTIN="',$typeIcons{arg},'"/>';
     print '</node>';
 }
 
-sub printChild($) {
-    my ($child) = @_;
-    print '<node TEXT="',xe(xml10_write_element($child)),'">';
+sub printChild($$$) {
+    my ($a,$args,$child) = @_;
+    my $txt = xml10_write_element($child);
+    my $expanded = expandArg($a,$args,$txt);
+    print '<node TEXT="',xe($txt.($txt eq $expanded ? '' : ' => '.$expanded)),'">';
     print '<icon BUILTIN="',$typeIcons{child},'"/>';
     print '</node>';
 }
@@ -260,14 +262,14 @@ sub runSteps($$$) {
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
 		next if($arg eq 'param');
-		printArg($a,$args,$arg,$step->attribute($arg));
+		printArg($a,$args,"",$arg,$step->attribute($arg));
 	    }
 	    foreach my $child (@{children($step)}) {
 		my $n = $child->type_name;
 		if ($n eq 'sequential') {
 		    runSteps($a,children($child),$args);
 		} else {
-		    printChild($child);
+		    printChild($a,$args,$child);
 		}
 	    }
 	    print '</node>';
@@ -284,15 +286,29 @@ sub runSteps($$$) {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
-		printArg($a,$args,$arg,$step->attribute($arg));
-	    }
-	    foreach my $child (@{children($step)}) {
-		printChild($child);
+		printArg($a,$args,"",$arg,$step->attribute($arg));
 	    }
 	    my $macro = $a->{macros}->{$name};
+	    my %macroargs;
 	    if (defined($macro)) {
-		my %args = map { $_ => expandArg($a, $args, $step->attribute($_)) } keys %{$step->attributes};
-		runSteps($a, $macro->{steps}, \%args);
+		foreach my $attr (@{$macro->{attributes}}) {
+		    my $val = $step->attribute($attr->{name});
+		    if (defined($val)) {
+		    } elsif (defined($attr->{default})) {
+			$val = $attr->{default};
+			printArg($a,$args,"DEFAULT ",$attr->{name},$val);
+		    } else {
+			printArg($a,$args,"MISSING ",$attr->{name},"");
+		    }
+		    my $expanded = expandArg($a, $args, $val);
+		    $macroargs{$attr->{name}} = $expanded;
+		}
+	    }
+	    foreach my $child (@{children($step)}) {
+		printChild($a,$args,$child);
+	    }
+	    if (defined($macro)) {
+		runSteps($a, $macro->{steps}, \%macroargs);
 	    }
 	    print '</node>';
 	}
