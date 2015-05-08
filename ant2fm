@@ -312,9 +312,9 @@ sub runSteps($$$) {
 		    if (defined($val)) {
 		    } elsif (defined($attr->{default})) {
 			$val = $attr->{default};
-			printArg($a,$args,"DEFAULT ",$attr->{name},$val);
+			printArg($a,undef,"DEFAULT ",$attr->{name},$val);
 		    } else {
-			printArg($a,$args,"MISSING ",$attr->{name},"");
+			printArg($a,undef,"MISSING ",$attr->{name},"");
 		    }
 		    my $expanded = expandArg($a, $args, $val);
 		    $macroargs{$attr->{name}} = $expanded;
