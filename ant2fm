@@ -165,28 +165,32 @@ sub withExpand($$) {
     return $orig eq $expanded ? $orig : $orig.' ∴ '.$expanded;
 }
 
+sub printExpand($$$$$$$) {
+    my ($a,$args,$prefix,$expanded,$suffix,$orig,$type) = @_;
+    print '<node TEXT="',xe($prefix.$expanded.$suffix),'">';
+    print '<icon BUILTIN="',$typeIcons{$type},'"/>';
+    print '<node TEXT="',xe($orig),'"/>' if ($orig ne $expanded);
+    print '</node>';
+}
+
 sub printArg($$$$$) {
     my ($a,$args,$prefix,$arg,$val) = @_;
     my $expanded = expandArg($a, $args, $val);
-    print '<node TEXT="',xe($prefix.$arg.' = '.withExpand($val,$expanded)),'">';
-    print '<icon BUILTIN="',$typeIcons{arg},'"/>';
-    print '</node>';
+    printExpand($a,$args,$prefix.$arg.' = ',$expanded,'',$val,'arg');
 }
 
 sub printChild($$$) {
     my ($a,$args,$child) = @_;
-    my $txt = xml10_write_element($child);
-    my $expanded = expandArg($a,$args,$txt);
-    print '<node TEXT="',xe(withExpand($txt,$expanded)),'">';
-    print '<icon BUILTIN="',$typeIcons{child},'"/>';
-    print '</node>';
+    my $val = xml10_write_element($child);
+    my $expanded = expandArg($a,$args,$val);
+    printExpand($a,$args,'',$expanded,'',$val,'child');
 }
 
 sub runSteps($$$) {
     my ($a, $steps, $args) = @_;
 
     ## TODO $a->{file} references are wrong after target execution starts
- 
+
     foreach my $step (@$steps) {
 	my $name = $step->type_name;
 	if ($name eq "import") {
@@ -212,9 +216,7 @@ sub runSteps($$$) {
 		    $propprefix = "IGNORED ";
 		    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 		}
-		print '<node TEXT="',xe($propprefix.'setProperty '.$propname.' = '.withExpand($propval, $expanded).$propsuffix),'">';
-		print '<icon BUILTIN="',$typeIcons{step},'"/>';
-		print '</node>';
+		printExpand($a,$args,$propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
 	    } elsif (defined($step->attribute("environment"))) {
 		my $envprefix = $step->attribute("environment").".";
 		$a->{properties}->{$envprefix.'HOSTNAME'} = "__HOSTNAME__";
