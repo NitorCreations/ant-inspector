@@ -231,8 +231,9 @@ sub runSteps($$$) {
 	} elsif ($name eq "scriptdef") {
 	} elsif ($name eq "path") {
 	} elsif ($name eq 'ant') {
-	    my $file = $step->attribute('antfile');
-	    print '<node TEXT="ant ',xe($file),'">';
+	    my $ofile = $step->attribute('antfile');
+	    my $file = expandArg($a,$args,$ofile);
+	    print '<node TEXT="ant ',xe(withExpand($ofile,$file)),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
 	    my $subAnt = parse($file, undef, {});
@@ -272,7 +273,9 @@ sub runSteps($$$) {
 	    }
 	    print '</node>';
 	} elsif ($name eq 'for') {
-	    print '<node TEXT="for ',xe($step->attribute('param')),'">';
+	    my $oparam = $step->attribute('param');
+	    my $param = expandArg($a,$args,$oparam);
+	    print '<node TEXT="for ',xe(withExpand($oparam,$param)),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
 		next if($arg eq 'param');
@@ -293,9 +296,8 @@ sub runSteps($$$) {
 	    if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
 		$text = $children->[0];
 	    }
-	    print '<node TEXT="echo ',xe(expandArg($a,$args,$text)),'">';
-	    print '<icon BUILTIN="',$typeIcons{echo},'"/>';
-	    print '</node>';
+	    my $expanded = expandArg($a,$args,$text);
+	    printExpand($a,$args,'',$expanded,'',$text,'echo');
 	} else {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
