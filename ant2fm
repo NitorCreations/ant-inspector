@@ -47,57 +47,9 @@ sub expand($$) {
     return $x;
 }
 
-sub parseSteps($$);
-sub parseSteps($$) {
-    my ($a, $steps) = @_;
-    my @steps;
-    foreach my $step (@$steps) {
-	my $res = {
-	    name => $step->type_name,
-	    args => { %{$step->attributes} }
-	};
-	my $children = $step->content_twine;
-	if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
-	    $res->{text} = $children->[0];
-	} else {
-	    foreach my $child (@{children($step)}) {
-		push @{$res->{children}}, $child;
-	    }
-	}
-
-	if ($res->{name} eq 'echo' && defined($res->{text})) {
-	    $res->{args}->{"message"} = $res->{text};
-	    delete $res->{text};
-	} elsif ($res->{name} eq 'if') {
-	    # TODO ifelse
-	    foreach my $child (@{$res->{children}}) {
-		my $n = $child->type_name;
-		if ($n eq 'then') {
-		    $res->{then} = parseSteps($a, children($child));
-		} elsif($n eq 'else') {
-		    $res->{else} = parseSteps($a, children($child));
-		} elsif($n eq 'equals') {
-		    $res->{condition} = 'equals("'.$child->attribute('arg1').'","'.$child->attribute('arg2').'")';
-		} elsif($n eq 'available') {
-		    $res->{condition} = 'available("'.$child->attribute('file').'","'.$child->attribute('type').'")';
-		} elsif($n eq 'istrue') {
-		    $res->{condition} = 'istrue('.$child->attribute('value').')';
-		} else {
-		    die Dumper($child);
-		}
-	    }   
-	    delete $res->{args};
-	    delete $res->{children};
-	}
-
-	push @steps, $res;
-    }
-    return \@steps;
-}
-
 sub parseTarget($$) {
     my ($a, $elem) = @_;
-    return { file => $a->{file}, deps => $elem->attribute("depends"), steps => parseSteps($a, children($elem)) };
+    return { file => $a->{file}, deps => $elem->attribute("depends"), steps => children($elem) };
 }
 
 sub parseMacro($$) {
@@ -105,7 +57,7 @@ sub parseMacro($$) {
     my @attrs;
     my $sequential;
     foreach my $elem (@{children($elem)}) {
-	my $name = $elem->type_name;
+	my $name  = $elem->type_name;
 	if ($name eq 'attribute') {
 	    push @attrs, $elem->attribute("name");
 	} elsif ($name eq 'sequential') {
@@ -114,7 +66,7 @@ sub parseMacro($$) {
 	}
     }
 
-    return { file => $a->{file}, attributes => \@attrs, steps => parseSteps($a, $sequential) };
+    return { file => $a->{file}, attributes => \@attrs, steps => $sequential };
 }
 
 sub dirof($) {
@@ -130,6 +82,8 @@ sub merge($$$) {
 	}
     }
 }
+
+sub runSteps($$$);
 
 sub parse($$$);
 sub parse($$$) {
@@ -155,61 +109,14 @@ sub parse($$$) {
 	$a->{properties}->{"basedir"} = File::Spec->rel2abs($xml->attribute("basedir") || dirof($file));
 	$a->{properties}->{"ant.project.default-target"} = $xml->attribute("default");
     }
-	
+
     my $projectName = $xml->attribute("name");
     if(defined($projectName)) {
 	$a->{properties}->{"ant.file.".$projectName} = $file;
 	$a->{properties}->{"ant.project.name"} = $projectName;
     }
 
-    foreach my $elem (@{children($xml)}) {
-	my $name = $elem->type_name;
-#	print "x $name\n";
-	if ($name eq "import") {
-	    my $importfile = expand($a, $elem->attribute("file"));
-	    $importfile = dirof($file) . '/' . $importfile unless($importfile =~ m!^/!);
-	    my $imported = parse($importfile, $a, undef);
-	    push @{$a->{imports}}, $imported;
-	    #print "=== DONE $importfile, RESUMING $file ===\n";
-	} elsif ($name eq "property") {
-	    if (defined($elem->attribute("name"))) {
-		my $name = $elem->attribute("name");
-		my $val = $elem->attribute("value") || $elem->attribute("location") or die Dumper($elem);
-		unless (defined($a->{properties}->{$name})) {
-		    my $expanded = expand($a, $val);
-		    #print "Define property ",$name," = ",$val," => ",$expanded,"\n";
-		    $a->{properties}->{$name} = $expanded;
-		} else {
-		    #print "Ignore property definition ",$name," = ",$val,"\n";
-		}
-	    } elsif (defined($elem->attribute("environment"))) {
-		my $envprefix = $elem->attribute("environment").".";
-		$a->{properties}->{$envprefix.'HOSTNAME'} = "__HOSTNAME__";
-	    }
-	    push @{$a->{steps}}, parseSteps($a, [ $elem ]);
-	} elsif ($name eq "target") {
-	    $a->{targets}->{$elem->attribute("name")} = parseTarget($a, $elem);
-	} elsif ($name eq "macrodef") {
-	    $a->{macros}->{$elem->attribute("name")} = parseMacro($a, $elem);
-	} elsif ($name eq "description") {
-	} elsif ($name eq "taskdef") {
-	} elsif ($name eq "scriptdef") {
-	} elsif ($name eq "path") {
-	} else {
-	    my $steps = parseSteps($a, [ $elem ]);
-	    print STDERR Dumper($steps);
-	    foreach my $step (@{$steps}) {
-		push @{$a->{steps}}, $step;
-	    }
-	}
-    }
-
-    foreach my $imp (@{$a->{imports}}) {
-	merge($a, 'macros', $imp->{macros});
-	merge($a, 'targets', $imp->{targets});
-    }
-
-    delete $a->{imports};
+    runSteps($a, children($xml), undef);
 
 #    print "y\n";
 
@@ -244,95 +151,141 @@ sub resolveArg($$) {
 sub expandArg($$$) {
     my ($a,$args,$x) = @_;
     $x = expand($a,$x);
-    $x =~ s!(\@\{([^\$\}]+)\})!my $r=resolveArg($args, $2);defined($r)?$r:$1!ge;
+    $x =~ s!(\@\{([^\$\}]+)\})!my $r=resolveArg($args, $2);defined($r)?$r:$1!ge if (defined($args));
     return $x;
 }
 
-sub enter($);
+sub runSteps($$$) {
+    my ($a, $steps, $args) = @_;
 
-sub runSteps($$$$);
-sub runSteps($$$$) {
-    my ($a, $steps, $args, $skip) = @_;
-#    print '<node TEXT="steps">';
+    ## TODO $a->{file} references are wrong after target execution starts
+    #print STDERR Dumper($steps, $args);
+ 
     foreach my $step (@$steps) {
-	print STDERR Dumper($step);
-	die $step unless(ref($step) eq 'HASH');
-	my $name = $step->{name};
-	if ($name eq 'ant') {
-	    print '<node TEXT="ant ',xe($step->{args}->{antfile}),'">';
-	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
-	    my $file = $step->{args}->{antfile};
-	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
-	    my $subAnt = parse($file, undef, {});
-	    enter($subAnt);
-	    run($subAnt, $step->{args}->{target});
-	    print '</node>';
-	} elsif ($name eq 'property') {
-	    my $propname = $step->{args}->{name};
-	    my $expanded = $skip ? $a->{properties}->{$propname} : expandArg($a, $args, $step->{args}->{value});
+	my $name = $step->type_name;
+#	print "x $name\n";
+	if ($name eq "import") {
+	    my $importfile = expandArg($a, $args, $step->attribute("file"));
+	    $importfile = dirof($a->{file}) . '/' . $importfile unless($importfile =~ m!^/!);
+	    my $imported = parse($importfile, $a, undef);
+	    push @{$a->{imports}}, $imported;
+	    #print "=== DONE $importfile, RESUMING $a->{file} ===\n";
+	} elsif ($name eq "property") {
 	    my $propprefix = "";
 	    my $propsuffix = "";
-	    unless($skip) {
-		if (defined($a->{properties}->{$propname})) {
-		    $propprefix = "IGNORED ";
-		    $propsuffix = $a->{properties}->{$propname} eq $expanded ? "" : ", retaining value ".$a->{properties}->{$propname};
-		} else {
+	    if (defined($step->attribute("name"))) {
+		my $propname = $step->attribute("name");
+		my $propval = $step->attribute("value") || $step->attribute("location") or die Dumper($step);
+		my $expanded = expandArg($a, $args, $propval);
+		if (!defined($a->{properties}->{$propname})) {
+		    #print "Define property ",$propname," = ",$propval," => ",$expanded,"\n";
 		    $a->{properties}->{$propname} = $expanded;
+		} elsif ($a->{properties}->{$propname} eq $expanded) {
+		    $propprefix = "REDUNDANT ";
+		} else {
+		    #print "Ignore property definition ",$propname," = ",$propval,"\n";
+		    $propprefix = "IGNORED ";
+		    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 		}
+		print '<node TEXT="',xe($propprefix.'setProperty '.$propname.' = '.$propval.($propval eq $expanded ? '' : ' => '.$expanded).$propsuffix),'">';
+		print '<icon BUILTIN="',$typeIcons{step},'"/>';
+		print '</node>';
+	    } elsif (defined($step->attribute("environment"))) {
+		my $envprefix = $step->attribute("environment").".";
+		$a->{properties}->{$envprefix.'HOSTNAME'} = "__HOSTNAME__";
 	    }
-	    print '<node TEXT="',xe($propprefix.'setProperty '.$propname.' = '.$step->{args}->{value}.($step->{args}->{value} eq $expanded ? '' : ' => '.$expanded).$propsuffix),'">';
+
+	} elsif ($name eq "target") {
+	    $a->{targets}->{$step->attribute("name")} = parseTarget($a, $step);
+	} elsif ($name eq "macrodef") {
+	    $a->{macros}->{$step->attribute("name")} = parseMacro($a, $step);
+	} elsif ($name eq "description") {
+	} elsif ($name eq "taskdef") {
+	} elsif ($name eq "scriptdef") {
+	} elsif ($name eq "path") {
+	} elsif ($name eq 'ant') {
+	    my $file = $step->attribute('antfile');
+	    print '<node TEXT="ant ',xe($file),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
+	    my $subAnt = parse($file, undef, {});
+	    run($subAnt, $step->attribute('target'));
 	    print '</node>';
 	} elsif ($name eq 'if') {
 	    # TODO ifelse
-	    my $expanded = expandArg($a, $args, $step->{condition});
-	    print '<node TEXT="if ',xe($step->{condition}.($step->{condition} eq $expanded ? '' : ' => '.$expanded)),'">';
+	    my $then;
+	    my $else;
+	    my $condition;
+	    foreach my $child (@{children($step)}) {
+		my $n = $child->type_name;
+		if ($n eq 'then') {
+		    $then = children($child);
+		} elsif($n eq 'else') {
+		    $else = children($child);
+		} elsif($n eq 'equals') {
+		    $condition = 'equals("'.$child->attribute('arg1').'","'.$child->attribute('arg2').'")';
+		} elsif($n eq 'available') {
+		    $condition = 'available("'.$child->attribute('file').'","'.$child->attribute('type').'")';
+		} elsif($n eq 'istrue') {
+		    $condition = 'istrue('.$child->attribute('value').')';
+		} else {
+		    die "Unsupported condition:".Dumper($child);
+		}
+	    }
+
+	    #print STDERR Dumper($step, $then, $else);
+
+	    my $expanded = expandArg($a, $args, $condition);
+	    print '<node TEXT="if ',xe($condition.($condition eq $expanded ? '' : ' => '.$expanded)),'">';
 	    print '<node TEXT="then">';
-	    runSteps($a, $step->{then}, undef, 0);
+	    runSteps($a, $then, $args);
 	    print '</node>';
-	    if(defined($step->{else})) {
+	    if(defined($else)) {
 		print '<node TEXT="else">';
-		runSteps($a, $step->{else}, undef, 0);
+		runSteps($a, $else, $args);
 		print '</node>';
 	    }
+	    print '</node>';
+	} elsif ($name eq 'echo') {
+	    my $text = $step->attribute("message");
+	    my $children = $step->content_twine;
+	    if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
+		$text = $children->[0];
+	    }
+	    print '<node TEXT="echo ',xe($text),'">';
+	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    print '</node>';
 	} else {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
-	    foreach my $arg (keys %{$step->{args}}) {
-		my $val = $step->{args}->{$arg};
+	    foreach my $arg (keys %{$step->attributes}) {
+		my $val = $step->attribute($arg);
 		my $expanded = expandArg($a, $args, $val);
 		print '<node TEXT="',xe($arg.' = '.$val.($val eq $expanded ? '' : ' => '.$expanded)),'">';
 		print '<icon BUILTIN="',$typeIcons{arg},'"/>';
 		print '</node>';
 	    }
-	    foreach my $child (@{$step->{children}}) {
+	    foreach my $child (@{children($step)}) {
 		print '<node TEXT="',xe(xml10_write_element($child)),'">';
 		print '<icon BUILTIN="',$typeIcons{child},'"/>';
 		print '</node>';
 	    }
 	    my $macro = $a->{macros}->{$name};
 	    if (defined($macro)) {
-		my %args = map { $_ => expandArg($a, $args, $step->{args}->{$_}) } keys %{$step->{args}};
-		runSteps($a, $macro->{steps}, \%args, 0);
-		#print STDERR $name, " = ", Dumper($macro);
+		my %args = map { $_ => expandArg($a, $args, $step->attribute($_)) } keys %{$step->attributes};
+		runSteps($a, $macro->{steps}, \%args);
 	    }
 	    print '</node>';
 	}
     }
-#    print '</node>';
-}
 
-sub enter($) {
-    my $a = $_[0];
-    print STDERR "ENTER\n";
-    runSteps($a, $a->{steps}, undef, 1);
-    print STDERR "JEE\n";
-#    foreach my $step (@{$a->{steps}}) {
-#	print '<node TEXT="',xe('setProperty '.$propname.' = '.$a->{properties}->{$propname}),'">';
-#	print '<icon BUILTIN="',$typeIcons{step},'"/>';
-#	print '</node>';
-#    }
+    # TODO too late (if allowed at all) when executing targets
+    foreach my $imp (@{$a->{imports}}) {
+	merge($a, 'macros', $imp->{macros});
+	merge($a, 'targets', $imp->{targets});
+    }
+
+    delete $a->{imports};
 }
 
 sub run($$);
@@ -353,19 +306,17 @@ sub run($$) {
 	}
 #	print '</node>';
     }
-    runSteps($a, $target->{steps}, undef, 0);
+    runSteps($a, $target->{steps}, undef);
 
     print '</node>';
 }
 
+print '<map version="1.0.1">';
+print '<node TEXT="Execution tree">';
 my $a = parse("wcs-build-all.xml", undef, {
 #    'wcs.temp.deploy.dir' => '__wcs.temp.deploy.dir__'
 });
 #print "DONE!\n";
-
-print '<map version="1.0.1">';
-print '<node TEXT="Execution tree">';
-enter($a);
 run($a, 'full.content.rebuild.with.test.content');
 print '<node POSITION="left" TEXT="Labels">';
 foreach my $type (keys %typeIcons) {
