@@ -350,12 +350,21 @@ sub run($$) {
     print '</node>';
 }
 
+if ($#ARGV < 1) {
+    print STDERR "usage: $0 <buildfile> <target> [<target2> [...]]\n";
+    exit (1);
+}
+
+my $buildfile = shift @ARGV;
+
 print '<map version="1.0.1">';
 print '<node TEXT="Execution tree">';
-my $a = parse("wcs-build-all.xml", undef, {
+my $a = parse($buildfile, undef, {
 #    'wcs.temp.deploy.dir' => '__wcs.temp.deploy.dir__'
 });
-run($a, 'full.content.rebuild.with.test.content');
+foreach my $target (@ARGV) {
+    run($a, $target);
+}
 print '<node POSITION="left" TEXT="Labels">';
 foreach my $type (keys %typeIcons) {
     print '<node TEXT="',xe($type),'"><icon BUILTIN="',$typeIcons{$type},'"/></node>';
