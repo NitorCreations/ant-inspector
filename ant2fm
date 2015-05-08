@@ -32,18 +32,13 @@ sub children($) {
 sub resolve($$) {
     my ($a, $property) = @_;
     my $res = $a->{properties}->{$property};
-#    die $property unless(defined($res));
-#    print "resolve $property = $res\n";
     return $res;
 }
 
 sub expand($$) {
     my ($a,$x) = @_;
     die unless(defined($a) && defined($x));
-#    print "expand $x\n";
-#    1 while ($x =~ s!(\$\{([^\$\}]+)\})!my $r=resolve($a, $2);defined($r)?$r:$1!ge);
     $x =~ s!(\$\{([^\$\}]+)\})!my $r=resolve($a, $2);defined($r)?$r:$1!ge;
-#    print "expand $_[1] = $x\n";
     return $x;
 }
 
@@ -207,12 +202,10 @@ sub runSteps($$$) {
 		my $propval = $step->attribute("value") || $step->attribute("location") or die Dumper($step);
 		my $expanded = expandArg($a, $args, $propval);
 		if (!defined($a->{properties}->{$propname})) {
-		    #print "Define property ",$propname," = ",withExpand($propval, $expanded),"\n";
 		    $a->{properties}->{$propname} = $expanded;
 		} elsif ($a->{properties}->{$propname} eq $expanded) {
 		    $propprefix = "REDUNDANT ";
 		} else {
-		    #print "Ignore property definition ",$propname," = ",$propval,"\n";
 		    $propprefix = "IGNORED ";
 		    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 		}
