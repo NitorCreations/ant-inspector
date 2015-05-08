@@ -118,8 +118,6 @@ sub parse($$$) {
 
     runSteps($a, children($xml), undef);
 
-#    print "y\n";
-
     return $a;
 }
 
@@ -159,11 +157,9 @@ sub runSteps($$$) {
     my ($a, $steps, $args) = @_;
 
     ## TODO $a->{file} references are wrong after target execution starts
-    #print STDERR Dumper($steps, $args);
  
     foreach my $step (@$steps) {
 	my $name = $step->type_name;
-#	print "x $name\n";
 	if ($name eq "import") {
 	    my $importfile = expandArg($a, $args, $step->attribute("file"));
 	    $importfile = dirof($a->{file}) . '/' . $importfile unless($importfile =~ m!^/!);
@@ -233,8 +229,6 @@ sub runSteps($$$) {
 		}
 	    }
 
-	    #print STDERR Dumper($step, $then, $else);
-
 	    my $expanded = expandArg($a, $args, $condition);
 	    print '<node TEXT="if ',xe($condition.($condition eq $expanded ? '' : ' => '.$expanded)),'">';
 	    print '<node TEXT="then">';
@@ -292,19 +286,14 @@ sub run($$);
 sub run($$) {
     my ($a,$targetName) = @_;
 
-#    print STDERR $targetName, " -- ", Dumper($a);
-
     print '<node TEXT="',xe($targetName),'">';
     print '<icon BUILTIN="',$typeIcons{target},'"/>';
 
     my $target = $a->{targets}->{$targetName};
-    #print Dumper($target);
     if (defined($target->{deps})) {
-#	print '<node TEXT="depends">';
 	foreach my $dep (split(/,/, $target->{deps})) {
 	    run($a, $dep);
 	}
-#	print '</node>';
     }
     runSteps($a, $target->{steps}, undef);
 
@@ -316,7 +305,6 @@ print '<node TEXT="Execution tree">';
 my $a = parse("wcs-build-all.xml", undef, {
 #    'wcs.temp.deploy.dir' => '__wcs.temp.deploy.dir__'
 });
-#print "DONE!\n";
 run($a, 'full.content.rebuild.with.test.content');
 print '<node POSITION="left" TEXT="Labels">';
 foreach my $type (keys %typeIcons) {
