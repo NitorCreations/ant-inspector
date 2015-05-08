@@ -212,7 +212,15 @@ sub runSteps($$$) {
 		printExpand($a,$args,$propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
 	    } elsif (defined($step->attribute("environment"))) {
 		my $envprefix = $step->attribute("environment").".";
-		$a->{properties}->{$envprefix.'HOSTNAME'} = "__HOSTNAME__";
+		print '<node TEXT="importPropertiesFromEnvironment">';
+		print '<icon BUILTIN="',$typeIcons{'step'},'"/>';
+		foreach my $key (keys %ENV) {
+		    print '<node TEXT="setProperty ',xe($key.' = '.$ENV{$key}),'">';
+		    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+		    print '</node>';
+		    $a->{properties}->{$envprefix.$key} = $ENV{$key};
+		}
+		print '</node>';
 	    }
 
 	} elsif ($name eq "target") {
