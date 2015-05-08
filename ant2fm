@@ -7,6 +7,7 @@ use Carp; $SIG{ __DIE__ } = sub { Carp::confess( @_ ) }; # die now prints stackt
 
 use XML::Easy::Text qw( xml10_read_document xml10_write_element );
 use File::Spec;
+use Config::Properties;
 
 sub slurp($) {
     undef $/;
@@ -181,6 +182,26 @@ sub printChild($$$) {
     printExpand($a,$args,'',$expanded,'',$val,'child');
 }
 
+sub importProps($$$$$) {
+    my ($a,$props,$keys,$prefix,$isExpand) = @_;
+    foreach my $propname (@$keys) {
+	my $propval = $props->{$propname};
+	$propname = $prefix.$propname;
+	my $expanded = $isExpand ? expand($a,$propval) : $propval;
+	my $propprefix = "";
+	my $propsuffix = "";
+	if (!defined($a->{properties}->{$propname})) {
+	    $a->{properties}->{$propname} = $expanded;
+	} elsif ($a->{properties}->{$propname} eq $expanded) {
+	    $propprefix = "REDUNDANT ";
+	} else {
+	    $propprefix = "IGNORED ";
+	    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
+	}
+	printExpand($a,undef,$propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
+    }
+}
+
 sub runSteps($$$) {
     my ($a, $steps, $args) = @_;
 
@@ -195,12 +216,12 @@ sub runSteps($$$) {
 	    push @{$a->{imports}}, $imported;
 	    #print "=== DONE $importfile, RESUMING $a->{file} ===\n";
 	} elsif ($name eq "property") {
-	    my $propprefix = "";
-	    my $propsuffix = "";
 	    if (defined($step->attribute("name"))) {
 		my $propname = $step->attribute("name");
 		my $propval = $step->attribute("value") || $step->attribute("location") or die Dumper($step);
 		my $expanded = expandArg($a, $args, $propval);
+		my $propprefix = "";
+		my $propsuffix = "";
 		if (!defined($a->{properties}->{$propname})) {
 		    $a->{properties}->{$propname} = $expanded;
 		} elsif ($a->{properties}->{$propname} eq $expanded) {
@@ -214,13 +235,22 @@ sub runSteps($$$) {
 		my $envprefix = $step->attribute("environment").".";
 		print '<node TEXT="importPropertiesFromEnvironment">';
 		print '<icon BUILTIN="',$typeIcons{'step'},'"/>';
-		foreach my $key (keys %ENV) {
-		    print '<node TEXT="setProperty ',xe($key.' = '.$ENV{$key}),'">';
-		    print '<icon BUILTIN="',$typeIcons{step},'"/>';
-		    print '</node>';
-		    $a->{properties}->{$envprefix.$key} = $ENV{$key};
-		}
+		my @keys = sort keys %ENV;
+		importProps($a,\%ENV,\@keys,$envprefix,0);
 		print '</node>';
+	    } elsif (defined($step->attribute("file"))) {
+		my $ofile = $step->attribute("file");
+		$ofile = expandArg($a,$args,$ofile);
+		my $file = $ofile =~ m!^/! ? $ofile : $a->{properties}->{"basedir"}.'/'.$ofile;
+		print '<node TEXT="importPropertiesFromFile ',xe($file),'">';
+		print '<icon BUILTIN="',$typeIcons{'step'},'"/>';
+		my $props = Config::Properties->new(file => $file);
+		my %propsHash = $props->properties;
+		my @propertyNames = $props->propertyNames;
+		importProps($a,\%propsHash,\@propertyNames,'',1);
+		print '</node>';
+	    } else {
+		die Dumper($step);
 	    }
 
 	} elsif ($name eq "target") {
