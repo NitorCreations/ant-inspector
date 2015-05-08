@@ -125,7 +125,7 @@ my @icons = qw(idea help yes messagebox_warning stop-sign closed info button_ok 
 
 my %typeIcons;
 my $typeIconCount = 0;
-foreach my $type (qw(target child arg)) {
+foreach my $type (qw(target child arg parse)) {
     $typeIcons{$type} = $icons[$typeIconCount++];
 }
 
@@ -221,7 +221,10 @@ sub runSteps($$$) {
 	    print '<node TEXT="ant ',xe($file),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
+	    print '<node TEXT="parse">';
+	    print '<icon BUILTIN="',$typeIcons{parse},'"/>';
 	    my $subAnt = parse($file, undef, {});
+	    print '</node>';
 	    run($subAnt, $step->attribute('target'));
 	    print '</node>';
 	} elsif ($name eq 'if') {
@@ -343,9 +346,12 @@ sub run($$) {
 
 print '<map version="1.0.1">';
 print '<node TEXT="Execution tree">';
+print '<node TEXT="parse">';
+print '<icon BUILTIN="',$typeIcons{parse},'"/>';
 my $a = parse("wcs-build-all.xml", undef, {
 #    'wcs.temp.deploy.dir' => '__wcs.temp.deploy.dir__'
 });
+print '</node>';
 run($a, 'full.content.rebuild.with.test.content');
 print '<node POSITION="left" TEXT="Labels">';
 foreach my $type (keys %typeIcons) {
