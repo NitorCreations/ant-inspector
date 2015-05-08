@@ -260,8 +260,7 @@ sub runSteps($$$) {
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
 		next if($arg eq 'param');
-		my $val = $step->attribute($arg);
-		printArg($a,$args,$arg,$val);
+		printArg($a,$args,$arg,$step->attribute($arg));
 	    }
 	    foreach my $child (@{children($step)}) {
 		my $n = $child->type_name;
@@ -285,8 +284,7 @@ sub runSteps($$$) {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    foreach my $arg (keys %{$step->attributes}) {
-		my $val = $step->attribute($arg);
-		printArg($a,$args,$arg,$val);
+		printArg($a,$args,$arg,$step->attribute($arg));
 	    }
 	    foreach my $child (@{children($step)}) {
 		printChild($child);
