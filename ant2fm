@@ -136,6 +136,7 @@ foreach my $type (qw(target child arg parse)) {
 }
 
 $typeIcons{'step'} = 'forward';
+$typeIcons{'echo'} = 'list';
 
 sub xe($) {
     my $s = $_[0];
@@ -159,10 +160,15 @@ sub expandArg($$$) {
     return $x;
 }
 
+sub withExpand($$) {
+    my ($orig,$expanded) = @_;
+    return $orig eq $expanded ? $orig : $orig.' ∴ '.$expanded;
+}
+
 sub printArg($$$$$) {
     my ($a,$args,$prefix,$arg,$val) = @_;
     my $expanded = expandArg($a, $args, $val);
-    print '<node TEXT="',xe($prefix.$arg.' = '.$val.($val eq $expanded ? '' : ' ∴ '.$expanded)),'">';
+    print '<node TEXT="',xe($prefix.$arg.' = '.withExpand($val,$expanded)),'">';
     print '<icon BUILTIN="',$typeIcons{arg},'"/>';
     print '</node>';
 }
@@ -171,7 +177,7 @@ sub printChild($$$) {
     my ($a,$args,$child) = @_;
     my $txt = xml10_write_element($child);
     my $expanded = expandArg($a,$args,$txt);
-    print '<node TEXT="',xe($txt.($txt eq $expanded ? '' : ' ∴ '.$expanded)),'">';
+    print '<node TEXT="',xe(withExpand($txt,$expanded)),'">';
     print '<icon BUILTIN="',$typeIcons{child},'"/>';
     print '</node>';
 }
@@ -197,7 +203,7 @@ sub runSteps($$$) {
 		my $propval = $step->attribute("value") || $step->attribute("location") or die Dumper($step);
 		my $expanded = expandArg($a, $args, $propval);
 		if (!defined($a->{properties}->{$propname})) {
-		    #print "Define property ",$propname," = ",$propval," ∴ ",$expanded,"\n";
+		    #print "Define property ",$propname," = ",withExpand($propval, $expanded),"\n";
 		    $a->{properties}->{$propname} = $expanded;
 		} elsif ($a->{properties}->{$propname} eq $expanded) {
 		    $propprefix = "REDUNDANT ";
@@ -206,7 +212,7 @@ sub runSteps($$$) {
 		    $propprefix = "IGNORED ";
 		    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 		}
-		print '<node TEXT="',xe($propprefix.'setProperty '.$propname.' = '.$propval.($propval eq $expanded ? '' : ' ∴ '.$expanded).$propsuffix),'">';
+		print '<node TEXT="',xe($propprefix.'setProperty '.$propname.' = '.withExpand($propval, $expanded).$propsuffix),'">';
 		print '<icon BUILTIN="',$typeIcons{step},'"/>';
 		print '</node>';
 	    } elsif (defined($step->attribute("environment"))) {
@@ -253,7 +259,7 @@ sub runSteps($$$) {
 	    }
 
 	    my $expanded = expandArg($a, $args, $condition);
-	    print '<node TEXT="if ',xe($condition.($condition eq $expanded ? '' : ' ∴ '.$expanded)),'">';
+	    print '<node TEXT="if ',xe(withExpand($condition, $expanded)),'">';
 	    print '<node TEXT="then">';
 	    runSteps($a, $then, $args);
 	    print '</node>';
@@ -285,8 +291,8 @@ sub runSteps($$$) {
 	    if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
 		$text = $children->[0];
 	    }
-	    print '<node TEXT="echo ',xe($text),'">';
-	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+	    print '<node TEXT="echo ',xe(expandArg($a,$args,$text)),'">';
+	    print '<icon BUILTIN="',$typeIcons{echo},'"/>';
 	    print '</node>';
 	} else {
 	    print '<node TEXT="',xe($name),'">';
