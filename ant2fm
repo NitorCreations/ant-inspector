@@ -402,8 +402,8 @@ if ($#ARGV < 0 || $help) {
     print STDERR "usage: $0 [<options>] <target> [<target2> [...]]
 
 Options:
-  -b <buildfile.xml>   default: build.xml
-  -Dproperty=value     example: -D build.env=prod
+  -b <buildfile.xml>      default: build.xml
+  -D <property>=<value>   example: -D build.env=prod
 ";
     exit (1);
 }
