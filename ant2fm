@@ -152,8 +152,8 @@ sub resolveArg($$) {
 
 sub expandArg($$$) {
     my ($a,$args,$x) = @_;
-    $x = expand($a,$x);
     $x =~ s!(\@\{([^\$\}]+)\})!my $r=resolveArg($args, $2);defined($r)?$r:$1!ge if (defined($args));
+    $x = expand($a,$x);
     return $x;
 }
 
@@ -221,6 +221,9 @@ sub runSteps($$$) {
 		my $propname = $step->attribute("name");
 		my $propval = $step->attribute("value") || $step->attribute("location") or die Dumper($step);
 		my $expanded = expandArg($a, $args, $propval);
+		if ($expanded =~ m!\$\{!) {
+		    print STDERR "$propname : $propval -> $expanded\n";
+		}
 		my $propprefix = "";
 		my $propsuffix = "";
 		if (!defined($a->{properties}->{$propname})) {
