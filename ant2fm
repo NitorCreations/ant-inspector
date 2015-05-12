@@ -8,6 +8,7 @@ use Carp; $SIG{ __DIE__ } = sub { Carp::confess( @_ ) }; # die now prints stackt
 use XML::Easy::Text qw( xml10_read_document xml10_write_element );
 use File::Spec;
 use Config::Properties;
+use Getopt::Long;
 
 sub slurp($) {
     undef $/;
@@ -388,18 +389,33 @@ sub run($$) {
     print '</node>';
 }
 
-if ($#ARGV < 1) {
-    print STDERR "usage: $0 <buildfile> <target> [<target2> [...]]\n";
+my $help;
+my $buildfile = 'build.xml';
+my %props;
+
+GetOptions('help|h' => \$help,
+	   'b=s' => \$buildfile,
+	   'D=s' => \%props,
+    );
+
+if ($#ARGV < 0 || $help) {
+    print STDERR "usage: $0 [<options>] <target> [<target2> [...]]
+
+Options:
+  -b <buildfile.xml>   default: build.xml
+  -Dproperty=value     example: -D build.env=prod
+";
     exit (1);
 }
 
-my $buildfile = shift @ARGV;
-
 print '<map version="1.0.1">';
 print '<node TEXT="Execution tree">';
-my $a = parse($buildfile, undef, {
-#    'wcs.temp.deploy.dir' => '__wcs.temp.deploy.dir__'
-});
+print '<node TEXT="Commandline arguments">';
+foreach my $propname (sort keys %props) {
+    printExpand(undef,undef,'setProperty '.$propname.' = ',$props{$propname},'',$props{$propname},'step');
+}
+print '</node>';
+my $a = parse($buildfile, undef, \%props);
 foreach my $target (@ARGV) {
     run($a, $target);
 }
