@@ -162,8 +162,8 @@ sub withExpand($$) {
     return $orig eq $expanded ? $orig : $expanded."\n⇐ ".$orig;
 }
 
-sub printExpand($$$$$$$) {
-    my ($a,$args,$prefix,$expanded,$suffix,$orig,$type) = @_;
+sub printExpand($$$$$) {
+    my ($prefix,$expanded,$suffix,$orig,$type) = @_;
     print '<node TEXT="',xe($prefix.$expanded.$suffix),'">';
     print '<icon BUILTIN="',$typeIcons{$type},'"/>';
     print '<node TEXT="',xe($orig),'"/>' if ($orig ne $expanded);
@@ -173,14 +173,14 @@ sub printExpand($$$$$$$) {
 sub printArg($$$$$) {
     my ($a,$args,$prefix,$arg,$val) = @_;
     my $expanded = expandArg($a, $args, $val);
-    printExpand($a,$args,$prefix.$arg.' = ',$expanded,'',$val,'arg');
+    printExpand($prefix.$arg.' = ',$expanded,'',$val,'arg');
 }
 
 sub printChild($$$) {
     my ($a,$args,$child) = @_;
     my $val = xml10_write_element($child);
     my $expanded = expandArg($a,$args,$val);
-    printExpand($a,$args,'',$expanded,'',$val,'child');
+    printExpand('',$expanded,'',$val,'child');
 }
 
 sub importProps($$$$$) {
@@ -199,7 +199,7 @@ sub importProps($$$$$) {
 	    $propprefix = "IGNORED ";
 	    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 	}
-	printExpand($a,undef,$propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
+	printExpand($propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
     }
 }
 
@@ -231,7 +231,7 @@ sub runSteps($$$) {
 		    $propprefix = "IGNORED ";
 		    $propsuffix = ", retaining value ".$a->{properties}->{$propname};
 		}
-		printExpand($a,$args,$propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
+		printExpand($propprefix.'setProperty '.$propname.' = ',$expanded,$propsuffix,$propval,'step');
 	    } elsif (defined($step->attribute("environment"))) {
 		my $envprefix = $step->attribute("environment").".";
 		print '<node TEXT="importPropertiesFromEnvironment">';
@@ -329,7 +329,7 @@ sub runSteps($$$) {
 		$text = $children->[0];
 	    }
 	    my $expanded = expandArg($a,$args,$text);
-	    printExpand($a,$args,'',$expanded,'',$text,'echo');
+	    printExpand('',$expanded,'',$text,'echo');
 	} else {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
@@ -412,7 +412,7 @@ print '<map version="1.0.1">';
 print '<node TEXT="Execution tree">';
 print '<node TEXT="Commandline arguments">';
 foreach my $propname (sort keys %props) {
-    printExpand(undef,undef,'setProperty '.$propname.' = ',$props{$propname},'',$props{$propname},'step');
+    printExpand('setProperty '.$propname.' = ',$props{$propname},'',$props{$propname},'step');
 }
 print '</node>';
 my $a = parse($buildfile, undef, \%props);
