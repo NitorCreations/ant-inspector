@@ -159,7 +159,7 @@ sub expandArg($$$) {
 
 sub withExpand($$) {
     my ($orig,$expanded) = @_;
-    return $orig eq $expanded ? $orig : $orig.' ∴ '.$expanded;
+    return $orig eq $expanded ? $orig : $expanded."\n⇐ ".$orig;
 }
 
 sub printExpand($$$$$$$) {
@@ -241,9 +241,9 @@ sub runSteps($$$) {
 		print '</node>';
 	    } elsif (defined($step->attribute("file"))) {
 		my $ofile = $step->attribute("file");
-		$ofile = expandArg($a,$args,$ofile);
-		my $file = $ofile =~ m!^/! ? $ofile : $a->{properties}->{"basedir"}.'/'.$ofile;
-		print '<node TEXT="importPropertiesFromFile ',xe($file),'">';
+		my $file = expandArg($a,$args,$ofile);
+		$file = $file =~ m!^/! ? $file : $a->{properties}->{"basedir"}.'/'.$file;
+		print '<node TEXT="importPropertiesFromFile ', xe(withExpand($ofile,$file)),'">';
 		print '<icon BUILTIN="',$typeIcons{'step'},'"/>';
 		my $props = Config::Properties->new(file => $file);
 		my %propsHash = $props->properties;
