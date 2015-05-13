@@ -268,7 +268,7 @@ sub runSteps($$$) {
 	} elsif ($name eq "scriptdef") {
 	} elsif ($name eq "path") {
 	} elsif ($name eq 'ant') {
-	    my $ofile = $step->attribute('antfile');
+	    my $ofile = $step->attribute('antfile') || 'build.xml';
 	    my $file = expandArg($a,$args,$ofile);
 	    print '<node TEXT="ant ',xe(withExpand($ofile,$file)),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
