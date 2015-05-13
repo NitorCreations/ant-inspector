@@ -19,3 +19,12 @@ Notable shortcomings:
     * <antcall inheritAll="true"> (default behaviour)
     * <antcall><param>
 
+# Example
+
+For this randomly selected Ant build file on github:
+
+  https://github.com/jheizmann/HaloACL/blob/3de9ac606c9ccab1acfeb3f75c2b9ae070412a8c/tests1/webtests/tests/allTests.xml
+
+we get the following partially expanded freemind graph:
+
+  [images/example1.png]
