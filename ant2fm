@@ -382,12 +382,18 @@ sub run($$) {
     print '<icon BUILTIN="',$typeIcons{target},'"/>';
 
     my $target = $a->{targets}->{$targetName};
-    if (defined($target->{deps})) {
-	foreach my $dep (split(/,/, $target->{deps})) {
-	    run($a, $dep);
+
+    if (defined($target)) {
+	if (defined($target->{deps})) {
+	    foreach my $dep (split(/,/, $target->{deps})) {
+		run($a, $dep);
+	    }
 	}
+	runSteps($a, $target->{steps}, undef);
+    } else {
+	print '<node TEXT="ERROR: Target ',xe($targetName),' not found"/>';
+	print STDERR "WARNING: Target $targetName not found\n";
     }
-    runSteps($a, $target->{steps}, undef);
 
     print '</node>';
 }
