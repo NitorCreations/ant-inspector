@@ -4,7 +4,7 @@ Tool I developed to inspect [Apache Ant](https://ant.apache.org) build scripts v
 
 Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. Example execution:
 
-    ./ant2fm -b release.xml -D release.version=1.0 make-release > make-release.fm
+    ./ant2fm -f release.xml -D release.version=1.0 make-release > make-release.fm
 
 This visualizes the tasks that would be executed when running:
 

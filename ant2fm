@@ -430,7 +430,7 @@ my $buildfile = 'build.xml';
 my %props;
 
 GetOptions('help|h' => \$help,
-	   'b=s' => \$buildfile,
+	   'f=s' => \$buildfile,
 	   'D=s' => \%props,
     );
 
@@ -438,7 +438,7 @@ if ($help) {
     print STDERR "usage: $0 [<options>] [<target> [...]]
 
 Options:
-  -b <buildfile.xml>      default: build.xml
+  -f <buildfile.xml>      default: build.xml
   -D <property>=<value>   example: -D build.env=prod
 ";
     exit (1);
