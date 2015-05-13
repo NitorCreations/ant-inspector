@@ -411,6 +411,11 @@ Options:
     exit (1);
 }
 
+unless (-f $buildfile) {
+    print STDERR $buildfile," not found\n";
+    exit(2);
+}
+
 print '<map version="1.0.1">';
 print '<node TEXT="Execution tree">';
 print '<node TEXT="Commandline arguments">';
