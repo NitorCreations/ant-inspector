@@ -2,20 +2,20 @@
 
 Tool I developed to inspect [Apache Ant](https://ant.apache.org) build.xml scripts visually.
 
-Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. Example execution:
+Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. For example, to visualize the tasks that would be executed when running:
+
+```Shell
+ant -f release.xml -Drelease.version=1.0 make-release
+```
+
+.. you would execute:
 
 ```Shell
 ./ant2fm -f release.xml -D release.version=1.0 make-release > make-release.fm
 freemind make-release.fm
 ```
 
-This visualizes the tasks that would be executed when running:
-
-```Shell
-ant -f release.xml -Drelease.version=1.0 make-release
-```
-
-This produces a file `make-release.fm` which can be opened for browsing by the venerable [Freemind mindmapping tool](http://freemind.sourceforge.net/wiki/index.php/Main_Page) (and also other tools supporting the same file format).
+This produces a file `make-release.fm` and opens it for browsing in the venerable [Freemind mindmapping tool](http://freemind.sourceforge.net/wiki/index.php/Main_Page). Other tools supporting the same file format can be used, of course.
 
 # Example
 
