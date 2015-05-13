@@ -413,8 +413,8 @@ GetOptions('help|h' => \$help,
 	   'D=s' => \%props,
     );
 
-if ($#ARGV < 0 || $help) {
-    print STDERR "usage: $0 [<options>] <target> [<target2> [...]]
+if ($help) {
+    print STDERR "usage: $0 [<options>] [<target> [...]]
 
 Options:
   -b <buildfile.xml>      default: build.xml
@@ -436,9 +436,20 @@ foreach my $propname (sort keys %props) {
 }
 print '</node>';
 my $a = parse($buildfile, undef, \%props);
-foreach my $target (@ARGV) {
-    run($a, $target);
+if ($#ARGV >= 0) {
+    foreach my $target (@ARGV) {
+	run($a, $target);
+    }
+} else {
+    my $target = $a->{properties}->{"ant.project.default-target"};
+    if (defined($target)) {
+	run($a, $target);
+    } else {
+	print '<node TEXT="NOTE: No default target"/>';
+	print STDERR "No default target\n";
+    }
 }
+
 print '<node POSITION="left" TEXT="Labels">';
 foreach my $type (keys %typeIcons) {
     print '<node TEXT="',xe($type),'"><icon BUILTIN="',$typeIcons{$type},'"/></node>';
