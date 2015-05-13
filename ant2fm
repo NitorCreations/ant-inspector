@@ -272,7 +272,13 @@ sub runSteps($$$) {
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
 	    my $subAnt = parse($file, undef, {});
-	    run($subAnt, $step->attribute('target'));
+	    my $targetName = $step->attribute('target') || $subAnt->{properties}->{"ant.project.default-target"};
+	    if (defined($targetName)) {
+		run($subAnt, $targetName);
+	    } else {
+		print '<node TEXT="ERROR: Target ',xe($targetName),' not found"/>';
+		print STDERR "WARNING: Target $targetName not found $file\n";
+	    }
 	    print '</node>';
 	} elsif ($name eq 'if') {
 	    # TODO ifelse
