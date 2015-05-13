@@ -354,6 +354,12 @@ sub runSteps($$$) {
 	    }
 	    my $expanded = expandArg($a,$args,$text);
 	    printExpand('',$expanded,'',$text,'echo');
+	} elsif ($name eq 'webtest') {
+	    my $name = $step->attribute('name');
+	    print '<node TEXT="webtest ',xe($name),'">';
+	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+	    runSteps($a,children($step),$args);
+	    print '</node>';
 	} else {
 	    print '<node TEXT="',xe($name),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
