@@ -10,16 +10,16 @@ use File::Spec;
 use Config::Properties;
 use Getopt::Long;
 
-sub slurp($) {
+sub slurpAndApplyEntities($) {
     undef $/;
-    open F, '<', $_[0] or die $_[0];
+    open F, '-|', 'xmllint', '--dtdattr', '--noent', '--dropdtd', $_[0] or die $_[0];
     my $file = <F>;
     close F;
     return $file;
 }
 
 sub slurpxml($) {
-    return xml10_read_document(slurp($_[0]));
+    return xml10_read_document(slurpAndApplyEntities($_[0]));
 }
 
 sub children($) {
