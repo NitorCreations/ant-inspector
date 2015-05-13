@@ -35,4 +35,4 @@ For this randomly selected Ant build file on github:
 
 we get the following partially expanded Freemind graph (cropped screenshot):
 
-  <img src="images/example1.png">
+  <a href="https://raw.githubusercontent.com/NitorCreations/ant-inspector/master/images/example1.png"><img src="images/example1.png"></a>
