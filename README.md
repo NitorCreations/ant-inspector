@@ -10,14 +10,14 @@ Notable shortcomings:
 
 * Poor error reporting
 * Unsupported tasks:
-    * <include> 
+    * &lt;include> 
 * Unsupported task features
-    * <ant inheritAll="true"> (default behaviour)
-    * <ant dir="...">
-    * <ant useNativeBasedir="...">
-    * <ant><property>
-    * <antcall inheritAll="true"> (default behaviour)
-    * <antcall><param>
+    * &lt;ant inheritAll="true"&gt; (default behaviour)
+    * &lt;ant dir="..."&gt;
+    * &lt;ant useNativeBasedir="..."&gt;
+    * &lt;ant&gt;&lt;property&gt;
+    * &lt;antcall inheritAll="true"&gt; (default behaviour)
+    * &lt;antcall&gt;&lt;param&gt;
 
 # Example
 
@@ -27,4 +27,4 @@ For this randomly selected Ant build file on github:
 
 we get the following partially expanded freemind graph:
 
-  [images/example1.png]
+  <img src="images/example1.png">
