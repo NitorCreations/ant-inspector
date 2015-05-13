@@ -1,6 +1,6 @@
 # Ant Inspector
 
-Tool I developed to inspect [Apache Ant](https://ant.apache.org) build scripts visually.
+Tool I developed to inspect [Apache Ant](https://ant.apache.org) build.xml scripts visually.
 
 Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. Example execution:
 
