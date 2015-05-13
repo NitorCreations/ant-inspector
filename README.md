@@ -12,6 +12,16 @@ This visualizes the tasks that would be executed when running:
 
 This produces a file `make-release.fm` which can be opened for browsing by the venerable [Freemind mindmapping tool](http://freemind.sourceforge.net/wiki/index.php/Main_Page) (and also other tools supporting the same file format).
 
+# Example
+
+For this randomly selected Ant build file on github:
+
+  https://github.com/jheizmann/HaloACL/blob/3de9ac606c9ccab1acfeb3f75c2b9ae070412a8c/tests1/webtests/tests/allTests.xml
+
+we get the following partially expanded Freemind graph (cropped screenshot):
+
+  <a href="https://raw.githubusercontent.com/NitorCreations/ant-inspector/master/images/example1.png"><img src="images/example1.png"></a>
+
 # TODO
 
 A subset of notable shortcomings:
@@ -26,13 +36,3 @@ A subset of notable shortcomings:
     * &lt;ant&gt;&lt;property&gt;
     * &lt;antcall inheritAll="true"&gt; (default behaviour)
     * &lt;antcall&gt;&lt;param&gt;
-
-# Example
-
-For this randomly selected Ant build file on github:
-
-  https://github.com/jheizmann/HaloACL/blob/3de9ac606c9ccab1acfeb3f75c2b9ae070412a8c/tests1/webtests/tests/allTests.xml
-
-we get the following partially expanded Freemind graph (cropped screenshot):
-
-  <a href="https://raw.githubusercontent.com/NitorCreations/ant-inspector/master/images/example1.png"><img src="images/example1.png"></a>
