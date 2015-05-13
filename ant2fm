@@ -88,7 +88,7 @@ sub parse($$$);
 sub parse($$$) {
     my $file = $_[0];
     my $parent = $_[1];
-    my $globalProperties = $_[2];
+    my $overrideProperties = $_[2];
 
     print '<node TEXT="parse ',xe($file =~ s!.*/!!r),'">';
     print '<icon BUILTIN="',$typeIcons{parse},'"/>';
@@ -103,10 +103,12 @@ sub parse($$$) {
     my $xml = slurpxml($file);
 
     if (defined($parent)) {
+	$a->{overrideProperties} = $parent->{overrideProperties};
 	$a->{properties} = $parent->{properties};
 	$a->{steps} = $parent->{steps};
     } else {
-	$a->{properties} = { %$globalProperties };
+	$a->{overrideProperties} = $overrideProperties;
+	$a->{properties} = { %$overrideProperties };
 	$a->{properties}->{"ant.file"} = $file;
 	$a->{properties}->{"basedir"} = File::Spec->rel2abs($xml->attribute("basedir") || dirof($file));
 	$a->{properties}->{"ant.project.default-target"} = $xml->attribute("default");
@@ -271,7 +273,7 @@ sub runSteps($$$) {
 	    print '<node TEXT="ant ',xe(withExpand($ofile,$file)),'">';
 	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
 	    $file = $a->{properties}->{"basedir"}.'/'.$file unless($file =~ m!^/!);
-	    my $subAnt = parse($file, undef, {});
+	    my $subAnt = parse($file, undef, $a->{overrideProperties});
 	    my $targetName = $step->attribute('target') || $subAnt->{properties}->{"ant.project.default-target"};
 	    if (defined($targetName)) {
 		run($subAnt, $targetName);
