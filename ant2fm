@@ -282,6 +282,19 @@ sub runSteps($$$) {
 		print STDERR "WARNING: Target $targetName not found $file\n";
 	    }
 	    print '</node>';
+	} elsif ($name eq 'antcall') {
+	    my $file = $a->{properties}->{"ant.file"};
+	    print '<node TEXT="antcall">';
+	    print '<icon BUILTIN="',$typeIcons{step},'"/>';
+	    my $subAnt = parse($file, undef, $a->{overrideProperties});
+	    my $targetName = $step->attribute('target') || $subAnt->{properties}->{"ant.project.default-target"};
+	    if (defined($targetName)) {
+		run($subAnt, $targetName);
+	    } else {
+		print '<node TEXT="ERROR: Target ',xe($targetName),' not found"/>';
+		print STDERR "WARNING: Target $targetName not found $file\n";
+	    }
+	    print '</node>';
 	} elsif ($name eq 'if') {
 	    # TODO ifelse
 	    my $then;

@@ -11,9 +11,11 @@ Notable shortcomings:
 * Poor error reporting
 * Unsupported tasks:
     * <include> 
-    * <antcall>
 * Unsupported task features
     * <ant inheritAll="true"> (default behaviour)
     * <ant dir="...">
     * <ant useNativeBasedir="...">
     * <ant><property>
+    * <antcall inheritAll="true"> (default behaviour)
+    * <antcall><param>
+
