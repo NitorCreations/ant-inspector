@@ -22,6 +22,25 @@ we get the following partially expanded Freemind graph (cropped screenshot):
 
   <a href="https://raw.githubusercontent.com/NitorCreations/ant-inspector/master/images/example1.png"><img src="images/example1.png"></a>
 
+# Installation
+
+You need:
+
+* xmllint
+* Perl modules:
+    * XML::Easy::Text
+    * Config::Properties;
+
+## Ubuntu (13.10)
+        apt-get install libxml2-utils libxml-easy-perl
+	cpan App::cpanminus
+	cpanm Config::Properties;
+
+## RedHat/Fedora
+        yum install libxml2 perl-Config-Properties
+	cpan App::cpanminus
+	cpanm XML::Easy::Text
+
 # TODO
 
 A subset of notable shortcomings:
