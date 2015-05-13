@@ -4,12 +4,16 @@ Tool I developed to inspect [Apache Ant](https://ant.apache.org) build.xml scrip
 
 Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. Example execution:
 
-    ./ant2fm -f release.xml -D release.version=1.0 make-release > make-release.fm
-    freemind make-release.fm
+```Shell
+./ant2fm -f release.xml -D release.version=1.0 make-release > make-release.fm
+freemind make-release.fm
+```
 
 This visualizes the tasks that would be executed when running:
 
-    ant -f release.xml -Drelease.version=1.0 make-release
+```Shell
+ant -f release.xml -Drelease.version=1.0 make-release
+```
 
 This produces a file `make-release.fm` which can be opened for browsing by the venerable [Freemind mindmapping tool](http://freemind.sourceforge.net/wiki/index.php/Main_Page) (and also other tools supporting the same file format).
 
@@ -34,14 +38,20 @@ You need:
     * Config::Properties;
 
 ## Ubuntu (13.10)
-    apt-get install freemind libxml2-utils libxml-easy-perl
-    cpan App::cpanminus
-    cpanm Config::Properties;
+
+```Shell
+apt-get install freemind libxml2-utils libxml-easy-perl
+cpan App::cpanminus
+cpanm Config::Properties;
+```
 
 ## RedHat/Fedora
-    yum install freemind libxml2 perl-Config-Properties
-    cpan App::cpanminus
-    cpanm XML::Easy::Text
+
+```Shell
+yum install freemind libxml2 perl-Config-Properties
+cpan App::cpanminus
+cpanm XML::Easy::Text
+```
 
 # TODO
 
