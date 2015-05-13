@@ -5,6 +5,7 @@ Tool I developed to inspect [Apache Ant](https://ant.apache.org) build.xml scrip
 Say you have a project with a complex set of ant build scripts and you need to get an overview of what some specific target does. Example execution:
 
     ./ant2fm -f release.xml -D release.version=1.0 make-release > make-release.fm
+    freemind make-release.fm
 
 This visualizes the tasks that would be executed when running:
 
@@ -26,18 +27,19 @@ we get the following partially expanded Freemind graph (cropped screenshot):
 
 You need:
 
+* Freemind (or similar)
 * xmllint
 * Perl modules:
     * XML::Easy::Text
     * Config::Properties;
 
 ## Ubuntu (13.10)
-    apt-get install libxml2-utils libxml-easy-perl
+    apt-get install freemind libxml2-utils libxml-easy-perl
     cpan App::cpanminus
     cpanm Config::Properties;
 
 ## RedHat/Fedora
-    yum install libxml2 perl-Config-Properties
+    yum install freemind libxml2 perl-Config-Properties
     cpan App::cpanminus
     cpanm XML::Easy::Text
 
