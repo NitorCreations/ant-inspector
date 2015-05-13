@@ -32,14 +32,14 @@ You need:
     * Config::Properties;
 
 ## Ubuntu (13.10)
-        apt-get install libxml2-utils libxml-easy-perl
-	cpan App::cpanminus
-	cpanm Config::Properties;
+    apt-get install libxml2-utils libxml-easy-perl
+    cpan App::cpanminus
+    cpanm Config::Properties;
 
 ## RedHat/Fedora
-        yum install libxml2 perl-Config-Properties
-	cpan App::cpanminus
-	cpanm XML::Easy::Text
+    yum install libxml2 perl-Config-Properties
+    cpan App::cpanminus
+    cpanm XML::Easy::Text
 
 # TODO
 
