@@ -130,7 +130,7 @@ sub parse($$$) {
 my @icons = qw(idea help yes messagebox_warning stop-sign closed info button_ok button_cancel full-1 full-2 full-3 full-4 full-5 full-6 full-7 full-8 full-9 full-0 stop prepare go back forward up down attach ksmiletris smiley-neutral smiley-oh smiley-angry smily_bad clanbomber desktop_new gohome folder korn Mail kmail list edit kaddressbook knotify password pencil wizard xmag bell bookmark penguin licq freemind_butterfly broken-line calendar clock hourglass launch flag-black flag-blue flag-green flag-orange flag-pink flag flag-yellow family female1 female2 male1 male2 fema group);
 
 my $typeIconCount = 0;
-foreach my $type (qw(target child arg parse)) {
+foreach my $type (qw(target child arg parse targetdef macrodef description)) {
     $typeIcons{$type} = $icons[$typeIconCount++];
 }
 
@@ -261,12 +261,14 @@ sub runSteps($$$) {
 
 	} elsif ($name eq "target") {
 	    $a->{targets}->{$step->attribute("name")} = parseTarget($a, $step);
+	    print '<node TEXT="defineTarget ',xe($step->attribute("name")),'">';
+	    print '<icon BUILTIN="',$typeIcons{targetdef},'"/>';
+	    print '</node>';
 	} elsif ($name eq "macrodef") {
 	    $a->{macros}->{$step->attribute("name")} = parseMacro($a, $step);
-	} elsif ($name eq "description") {
-	} elsif ($name eq "taskdef") {
-	} elsif ($name eq "scriptdef") {
-	} elsif ($name eq "path") {
+	    print '<node TEXT="defineMacro ',xe($step->attribute("name")),'">';
+	    print '<icon BUILTIN="',$typeIcons{macrodef},'"/>';
+	    print '</node>';
 	} elsif ($name eq 'ant') {
 	    my $ofile = $step->attribute('antfile') || 'build.xml';
 	    my $file = expandArg($a,$args,$ofile);
@@ -345,6 +347,16 @@ sub runSteps($$$) {
 		    printChild($a,$args,$child);
 		}
 	    }
+	    print '</node>';
+	} elsif ($name eq "description") {
+	    my $text = "";
+	    my $children = $step->content_twine;
+	    if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
+		$text = $children->[0] =~ s!^\s+!!r;
+		$text =~ s!\s+$!!;
+	    }
+	    print '<node TEXT="',xe($text),'">';
+	    print '<icon BUILTIN="',$typeIcons{description},'"/>';
 	    print '</node>';
 	} elsif ($name eq 'echo') {
 	    my $text = $step->attribute("message");
