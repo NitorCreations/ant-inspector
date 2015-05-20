@@ -350,7 +350,8 @@ sub runSteps($$$) {
 	    my $text = $step->attribute("message");
 	    my $children = $step->content_twine;
 	    if (length(@$children) == 1 && length($children->[0] =~ s!^\s+!!r) > 0) {
-		$text = $children->[0];
+		$text = $children->[0] =~ s!^\s+!!r;
+		$text =~ s!\s+$!!;
 	    }
 	    my $expanded = expandArg($a,$args,$text);
 	    printExpand('',$expanded,'',$text,'echo');
