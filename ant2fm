@@ -438,56 +438,60 @@ sub run($$) {
     print '</node>';
 }
 
-my $help;
-my $buildfile = 'build.xml';
-my %props;
+sub main() {
+    my $help;
+    my $buildfile = 'build.xml';
+    my %props;
 
-GetOptions('help|h' => \$help,
-	   'f=s' => \$buildfile,
-	   'D=s' => \%props,
-    );
+    GetOptions('help|h' => \$help,
+	       'f=s' => \$buildfile,
+	       'D=s' => \%props,
+	);
 
-if ($help) {
-    print STDERR "usage: $0 [<options>] [<target> [...]]
+    if ($help) {
+	print STDERR "usage: $0 [<options>] [<target> [...]]
 
 Options:
   -f <buildfile.xml>      default: build.xml
   -D <property>=<value>   example: -D build.env=prod
 ";
-    exit (1);
-}
-
-unless (-f $buildfile) {
-    print STDERR $buildfile," not found\n";
-    exit(2);
-}
-
-print '<map version="1.0.1">';
-print '<node TEXT="Execution tree">';
-print '<node TEXT="Commandline arguments">';
-foreach my $propname (sort keys %props) {
-    printExpand('setProperty '.$propname.' = ',$props{$propname},'',$props{$propname},'step');
-}
-print '</node>';
-my $a = parse($buildfile, undef, \%props);
-if ($#ARGV >= 0) {
-    foreach my $target (@ARGV) {
-	run($a, $target);
+	exit (1);
     }
-} else {
-    my $target = $a->{properties}->{"ant.project.default-target"};
-    if (defined($target)) {
-	run($a, $target);
+
+    unless (-f $buildfile) {
+	print STDERR $buildfile," not found\n";
+	exit(2);
+    }
+
+    print '<map version="1.0.1">';
+    print '<node TEXT="Execution tree">';
+    print '<node TEXT="Commandline arguments">';
+    foreach my $propname (sort keys %props) {
+	printExpand('setProperty '.$propname.' = ',$props{$propname},'',$props{$propname},'step');
+    }
+    print '</node>';
+    my $a = parse($buildfile, undef, \%props);
+    if ($#ARGV >= 0) {
+	foreach my $target (@ARGV) {
+	    run($a, $target);
+	}
     } else {
-	print '<node TEXT="NOTE: No default target"/>';
-	print STDERR "No default target\n";
+	my $target = $a->{properties}->{"ant.project.default-target"};
+	if (defined($target)) {
+	    run($a, $target);
+	} else {
+	    print '<node TEXT="NOTE: No default target"/>';
+	    print STDERR "No default target\n";
+	}
     }
+
+    print '<node POSITION="left" TEXT="Labels">';
+    foreach my $type (keys %typeIcons) {
+	print '<node TEXT="',xe($type),'"><icon BUILTIN="',$typeIcons{$type},'"/></node>';
+    }
+    print '</node>';
+    print '</node>';
+    print "</map>\n";
 }
 
-print '<node POSITION="left" TEXT="Labels">';
-foreach my $type (keys %typeIcons) {
-    print '<node TEXT="',xe($type),'"><icon BUILTIN="',$typeIcons{$type},'"/></node>';
-}
-print '</node>';
-print '</node>';
-print "</map>\n";
+main();
