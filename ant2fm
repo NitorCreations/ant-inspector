@@ -10,6 +10,8 @@ use File::Spec;
 use Config::Properties;
 use Getopt::Long;
 
+my $noOrig = 0;
+
 sub slurpAndApplyEntities($) {
     undef $/;
     open F, '-|', 'xmllint', '--dtdattr', '--noent', '--dropdtd', $_[0] or die $_[0];
@@ -161,14 +163,14 @@ sub expandArg($$$) {
 
 sub withExpand($$) {
     my ($orig,$expanded) = @_;
-    return $orig eq $expanded ? $orig : $expanded."\n⇐ ".$orig;
+    return $noOrig || $orig eq $expanded ? $expanded : $expanded."\n⇐ ".$orig;
 }
 
 sub printExpand($$$$$) {
     my ($prefix,$expanded,$suffix,$orig,$type) = @_;
     print '<node TEXT="',xe($prefix.$expanded.$suffix),'">';
     print '<icon BUILTIN="',$typeIcons{$type},'"/>';
-    print '<node TEXT="',xe($orig),'"/>' if ($orig ne $expanded);
+    print '<node TEXT="',xe($orig),'"/>' unless ($noOrig || $orig eq $expanded);
     print '</node>';
 }
 
@@ -446,6 +448,7 @@ sub main() {
     GetOptions('help|h' => \$help,
 	       'f=s' => \$buildfile,
 	       'D=s' => \%props,
+	       'no-orig' => \$noOrig
 	);
 
     if ($help) {
@@ -454,6 +457,7 @@ sub main() {
 Options:
   -f <buildfile.xml>      default: build.xml
   -D <property>=<value>   example: -D build.env=prod
+  --no-orig               suppress reporting of originating declaration
 ";
 	exit (1);
     }
