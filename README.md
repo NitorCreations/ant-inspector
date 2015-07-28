@@ -60,6 +60,7 @@ A subset of notable shortcomings:
 * Poor error reporting
 * Unsupported tasks:
     * &lt;include&gt;
+    * &lt;local&gt;
 * Unsupported task features
     * &lt;ant inheritAll="true"&gt; (default behaviour)
     * &lt;ant dir="..."&gt;
