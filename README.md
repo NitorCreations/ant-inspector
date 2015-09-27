@@ -17,13 +17,15 @@ freemind make-release.fm
 
 This produces a file `make-release.fm` and opens it for browsing in the venerable [Freemind mindmapping tool](http://freemind.sourceforge.net/wiki/index.php/Main_Page). Other tools supporting the same file format can be used, of course.
 
+Please note that the actual tasks are not run; it's merely a simulation. Any conditional parts will include both the "if true" and "if false" paths along with the condition used. This allows one to consider different outcomes in different situations, see which variables are used to decide what is done, etc.
+
 # Example
 
 For this randomly selected Ant build file on github:
 
   https://github.com/jheizmann/HaloACL/blob/3de9ac606c9ccab1acfeb3f75c2b9ae070412a8c/tests1/webtests/tests/allTests.xml
 
-we get the following partially expanded Freemind graph (cropped screenshot):
+using the command `../ant2fm -b allTests.xml > foo.mm` we get the following partially expanded Freemind graph (cropped screenshot):
 
   <a href="https://raw.githubusercontent.com/NitorCreations/ant-inspector/master/images/example1.png"><img src="images/example1.png"></a>
 
